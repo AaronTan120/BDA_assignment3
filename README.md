@@ -8,6 +8,8 @@ We would be using Scrapy to scrape the data before publishing them over to kafka
 
 Then we would use Spark Streaming to consume the data from the 'scrapy-output' topic from kafka. 
 
+Spark Streaming will then output the top 10 users and top 10 words in every 2 minutes windows
+
 <h2>Dependencies</h2>
 
 1. Kafka
