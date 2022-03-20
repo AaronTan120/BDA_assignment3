@@ -2,6 +2,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import *
 from pyspark.sql.functions import explode
 from pyspark.sql.functions import split
+from pyspark.sql.functions import window
+
 
 def parse_data_from_kafka_message(sdf, schema):
     from pyspark.sql.functions import split
@@ -15,11 +17,13 @@ def parse_data_from_kafka_message(sdf, schema):
     return sdf
 
 if __name__ == "__main__":
-
+ 
     spark = SparkSession.builder \
                .appName("KafkaWordCount") \
                .getOrCreate()
 
+    spark.sparkContext.setLogLevel("ERROR")
+    
     #Read from Kafka's topic scrapy-output
     df = spark.readStream \
             .format("kafka") \
@@ -42,22 +46,50 @@ if __name__ == "__main__":
     lines = parse_data_from_kafka_message(lines, hardwarezoneSchema) \
         .select("topic","author","content","timestamp")
 
-    lines2 = lines.select("topic").writeStream \
-        .queryName("selectline") \
-        .outputMode("Append") \
+
+    #create user defined function to get word len
+    strlen = spark.udf.register("wordLengthString", lambda x: len(x))
+
+    #select content column and split them into words while adding a timestamp
+    #executes wordLengthString UDF in the where function and returns words with length more than 2
+    #this eliminates common words such as "a", "to", "he", "the", etc.
+    words = lines.select( 
+       explode(
+           split("content", " ")
+       ).alias("word"), "timestamp"
+    ).where("wordLengthString(word) > 3")
+
+
+    #creates 2 minute windows of words with a trigger of 1 minute
+    #order by window and count in ascending order
+    windowedWords = words \
+        .groupBy(
+            window(lines.timestamp, "2 minutes", "1 minutes"),
+            words.word).count().orderBy('window', "count", ascending = False)
+
+
+    #creates 2 minute windows of authors with a trigger of 1 minute
+    #order by window and count in ascending order
+    windowedUsers = lines \
+        .groupBy(
+            window(lines.timestamp, "2 minutes", "1 minutes"),
+            lines.author).count().orderBy('window', "count", ascending = False)
+
+    #start streaming top 10 users output in console
+    userContents = windowedUsers.writeStream.queryName("WriteContent_topusers") \
+        .outputMode("complete") \
         .format("console") \
-        .option("checkpointLocation", "/user/zzj/spark-checkpoint") \
+        .option("numRows",10) \
         .start()
 
-
-    #Select the content field and output
-    contents = lines \
-        .writeStream \
-        .queryName("WriteContent") \
-        .outputMode("append") \
+    #start streming top 10 words output in console
+    wordsContents = windowedWords.writeStream.queryName("WriteContent_topwords") \
+        .outputMode("complete") \
         .format("console") \
-        .option("checkpointLocation", "/user/zzj/spark-checkpoint") \
+        .option("numRows",10) \
         .start()
+    
+    #wait for the incoming messages for all streams
+    spark.streams.awaitAnyTermination()
 
-    #Start the job and wait for the incoming messages
-    contents.awaitTermination()
+
