@@ -1,5 +1,3 @@
-# BDA_assignment3
- 
 <h1>BDA Assignment 3: Spark Streaming</h1>
 
 This project scrapes all forum posts as well as their comments in Hardwarezone.
