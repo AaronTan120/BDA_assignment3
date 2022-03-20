@@ -18,14 +18,14 @@ Spark Streaming will then output the top 10 users and top 10 words in every 2 mi
 
 <h2>Steps on how to run the project</h2>
 
-1. Start Kafka on a terminal
-```
-kafka-server-start /usr/local/etc/kafka/server.properties
-```
-
-2. Start Zookeeper on a separate terminal
+1. Start Zookeeper on a separate terminal
 ```
 zookeeper-server-start /usr/local/etc/kafka/zookeeper.properties
+```
+
+2. Start Kafka on a terminal
+```
+kafka-server-start /usr/local/etc/kafka/server.properties
 ```
 
 3. On another terminal run the scrapy spider
@@ -40,3 +40,8 @@ cd BDA_assignment3
 spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2 kafka_wordcount.py
 ```
 
+<h2>Sample Output</h2>
+
+![Alt text](/sample_output/top_words.png?raw=true "Top 10 words within last 2 minute window")
+
+![Alt text](/sample_output/top_users.png?raw=true "Top 10 users within last 2 minute window")

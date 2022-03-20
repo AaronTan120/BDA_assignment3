@@ -23,7 +23,7 @@ if __name__ == "__main__":
                .getOrCreate()
 
     spark.sparkContext.setLogLevel("ERROR")
-    
+
     #Read from Kafka's topic scrapy-output
     df = spark.readStream \
             .format("kafka") \
@@ -47,12 +47,12 @@ if __name__ == "__main__":
         .select("topic","author","content","timestamp")
 
 
-    #create user defined function to get word len
+    #Create user defined function to get word len
     strlen = spark.udf.register("wordLengthString", lambda x: len(x))
 
-    #select content column and split them into words while adding a timestamp
-    #executes wordLengthString UDF in the where function and returns words with length more than 2
-    #this eliminates common words such as "a", "to", "he", "the", etc.
+    #Select content column and split them into words while adding a timestamp
+    #Executes wordLengthString UDF in the where function and returns words with length more than 2
+    #This eliminates common words such as "a", "to", "he", "the", etc.
     words = lines.select( 
        explode(
            split("content", " ")
