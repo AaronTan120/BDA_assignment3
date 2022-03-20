@@ -42,6 +42,8 @@ spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2 kafka_w
 
 <h2>Sample Output</h2>
 
+# Top 10 Words within last 2 minute window
 ![Alt text](/sample_output/top_words.png?raw=true "Top 10 words within last 2 minute window")
 
+# Top 10 Users within last 2 minute window
 ![Alt text](/sample_output/top_users.png?raw=true "Top 10 users within last 2 minute window")
